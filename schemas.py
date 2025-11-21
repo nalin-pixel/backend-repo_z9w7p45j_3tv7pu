@@ -12,9 +12,9 @@ Model name is converted to lowercase for the collection name:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
-# Example schemas (replace with your own):
+# Example schemas (kept for reference):
 
 class User(BaseModel):
     """
@@ -38,11 +38,28 @@ class Product(BaseModel):
     category: str = Field(..., description="Product category")
     in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+# GST App Schemas
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class GSTCategory(BaseModel):
+    """
+    GST categories with dynamic rates and keywords for AI-like matching
+    Collection name: "gstcategory"
+    """
+    name: str = Field(..., description="Category name, e.g., Electronics, Restaurant")
+    rate: float = Field(..., ge=0, le=100, description="GST rate percentage, e.g., 18 for 18%")
+    keywords: List[str] = Field(default_factory=list, description="Keywords to help classify descriptions")
+    active: bool = Field(True, description="Whether this category is active")
+
+class GSTCalculation(BaseModel):
+    """
+    Calculation log for auditing
+    Collection name: "gstcalculation"
+    """
+    amount: float = Field(..., ge=0, description="Base amount entered by user")
+    mode: str = Field(..., description="exclusive or inclusive")
+    applied_rate: float = Field(..., ge=0, le=100, description="Rate actually used")
+    computed_tax: float = Field(..., ge=0, description="Tax amount computed")
+    net_amount: float = Field(..., ge=0, description="Amount before tax")
+    gross_amount: float = Field(..., ge=0, description="Amount after tax")
+    detected_category: Optional[str] = Field(None, description="Category name used")
+    source: Optional[str] = Field(None, description="How rate was chosen: provided|detected|default")
